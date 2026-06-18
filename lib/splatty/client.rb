@@ -24,6 +24,7 @@ module Splatty
     end
 
     def close
+      @transport.close_connections
     end
 
     private

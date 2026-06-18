@@ -5,9 +5,19 @@ require "json"
 module Splatty
   class Transport
     SDK_NAME = "splatty.ruby".freeze
+    KEEP_ALIVE_TIMEOUT = 60
 
     def initialize(configuration)
       @configuration = configuration
+      @mutex = Mutex.new
+      @connections = {}
+    end
+
+    def close_connections
+      @mutex.synchronize do
+        @connections.each_value { |http| http.finish if http.started? rescue nil }
+        @connections.clear
+      end
     end
 
     def send_envelope(event)
@@ -52,19 +62,38 @@ module Splatty
     end
 
     def post(uri, body, headers)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = uri.scheme == "https"
-      http.open_timeout = @configuration.open_timeout
-      http.read_timeout = @configuration.read_timeout
-
       req = Net::HTTP::Post.new(uri.request_uri, headers)
       req.body = body
 
-      response = http.request(req)
-      [response.code.to_i, response.body]
-    rescue StandardError => e
-      log_failure(uri, e)
-      nil
+      key = connection_key(uri)
+      @mutex.synchronize do
+        http = (@connections[key] ||= start_connection(uri))
+        begin
+          response = http.request(req)
+          [response.code.to_i, response.body]
+        rescue StandardError => e
+          # Connection may be half-closed by a keep-alive timeout on the server
+          # side. Drop it so the next call starts fresh.
+          http.finish if http.started? rescue nil
+          @connections.delete(key)
+          log_failure(uri, e)
+          nil
+        end
+      end
+    end
+
+    def connection_key(uri)
+      "#{uri.scheme}://#{uri.host}:#{uri.port}"
+    end
+
+    def start_connection(uri)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = uri.scheme == "https"
+      http.keep_alive_timeout = KEEP_ALIVE_TIMEOUT
+      http.open_timeout = @configuration.open_timeout
+      http.read_timeout = @configuration.read_timeout
+      http.start
+      http
     end
 
     def log_failure(uri, error)
