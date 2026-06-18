@@ -4,7 +4,7 @@ module Splatty
   module SemanticLogger
     class Appender < ::SemanticLogger::Subscriber
       DEFAULT_BATCH_SIZE = 100
-      DEFAULT_FLUSH_INTERVAL = 2.0
+      DEFAULT_FLUSH_INTERVAL = 15.0
       DEFAULT_QUEUE_LIMIT = 5_000
 
       # Drop log entries describing requests to Splatty's own intake endpoints.
