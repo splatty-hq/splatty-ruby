@@ -33,11 +33,11 @@ module Splatty
 
     def send_logs(host:, logs:)
       return if logs.empty?
-      uri = URI.parse(@configuration.logs_url)
-      body = JSON.generate({ host: host, logs: logs })
+      uri = URI.parse(@configuration.envelope_url)
+      body = serialize_log_envelope(host, logs)
       post(uri, body, {
-        "Content-Type" => "application/json",
-        "Authorization" => "Bearer #{@configuration.ingest_key}"
+        "Content-Type" => "application/x-sentry-envelope",
+        "X-Sentry-Auth" => sentry_auth_header
       })
     end
 
@@ -58,6 +58,22 @@ module Splatty
       item_header = {
         type: "event",
         content_type: "application/json",
+        length: item_payload.bytesize
+      }
+      "#{JSON.generate(header)}\n#{JSON.generate(item_header)}\n#{item_payload}"
+    end
+
+    def serialize_log_envelope(host, logs)
+      header = {
+        sent_at: Time.now.utc.iso8601,
+        dsn: @configuration.dsn,
+        sdk: { name: SDK_NAME, version: Splatty::VERSION }
+      }
+      item_payload = JSON.generate({ host: host, items: logs })
+      item_header = {
+        type: "log",
+        item_count: logs.size,
+        content_type: "application/vnd.splatty.items.log+json",
         length: item_payload.bytesize
       }
       "#{JSON.generate(header)}\n#{JSON.generate(item_header)}\n#{item_payload}"
