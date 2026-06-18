@@ -65,4 +65,24 @@ class SemanticLoggerAppenderTest < Minitest::Test
     refute appender.log(log)
     appender.close
   end
+
+  def test_drops_logs_about_splatty_intake_paths
+    appender = Splatty::SemanticLogger::Appender.new(flush_interval: 5, host: "h")
+
+    %w[/api/4/logs /api/42/metrics /api/1/envelope/].each do |path|
+      log = ::SemanticLogger::Log.new("Test", :info)
+      log.message = "Completed POST #{path}"
+      log.named_tags = { path: path, method: "POST", status: 202 }
+      refute appender.log(log), "expected #{path} to be dropped"
+    end
+
+    log = ::SemanticLogger::Log.new("Test", :info)
+    log.message = "real customer request"
+    log.named_tags = { path: "/users/42", method: "GET", status: 200 }
+    assert appender.log(log)
+
+    appender.close
+    assert_equal 1, recorded.first[:logs].size
+    assert_equal "/users/42", recorded.first[:logs].first[:path]
+  end
 end

@@ -14,8 +14,8 @@ module Splatty
       @environment = ENV["RACK_ENV"] || ENV["RAILS_ENV"] || "development"
       @release = ENV["SPLATTY_RELEASE"]
       @server_name = nil
-      @open_timeout = 2
-      @read_timeout = 3
+      @open_timeout = 5
+      @read_timeout = 10
       @before_send = nil
     end
 
