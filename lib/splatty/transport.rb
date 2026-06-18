@@ -1,6 +1,8 @@
 require "net/http"
 require "uri"
 require "json"
+require "stringio"
+require "zlib"
 
 module Splatty
   class Transport
@@ -62,8 +64,10 @@ module Splatty
     end
 
     def post(uri, body, headers)
+      gzipped = gzip(body)
+      headers = headers.merge("Content-Encoding" => "gzip")
       req = Net::HTTP::Post.new(uri.request_uri, headers)
-      req.body = body
+      req.body = gzipped
 
       key = connection_key(uri)
       @mutex.synchronize do
@@ -84,6 +88,15 @@ module Splatty
 
     def connection_key(uri)
       "#{uri.scheme}://#{uri.host}:#{uri.port}"
+    end
+
+    def gzip(body)
+      io = StringIO.new(+"".b)
+      io.binmode
+      gz = Zlib::GzipWriter.new(io)
+      gz.write(body)
+      gz.close
+      io.string
     end
 
     def start_connection(uri)

@@ -44,8 +44,10 @@ class TransportTest < Minitest::Test
     assert_equal "POST", req[:method]
     assert_includes req[:headers]["x-sentry-auth"].first, "sentry_key=abc"
     assert_equal "application/x-sentry-envelope", req[:headers]["content-type"].first
+    assert_equal "gzip", req[:headers]["content-encoding"].first
 
-    lines = req[:body].split("\n")
+    decoded = Zlib::GzipReader.new(StringIO.new(req[:body])).read
+    lines = decoded.split("\n")
     assert_equal 3, lines.size
     envelope_header = JSON.parse(lines[0])
     item_header = JSON.parse(lines[1])
@@ -65,7 +67,9 @@ class TransportTest < Minitest::Test
     req = @requests.first
     assert_equal "/api/42/logs", req[:path]
     assert_equal "Bearer ingest-key", req[:headers]["authorization"].first
-    body = JSON.parse(req[:body])
+    assert_equal "gzip", req[:headers]["content-encoding"].first
+    decoded = Zlib::GzipReader.new(StringIO.new(req[:body])).read
+    body = JSON.parse(decoded)
     assert_equal "test-host", body["host"]
     assert_equal 1, body["logs"].size
   end
