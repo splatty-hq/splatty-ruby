@@ -9,8 +9,6 @@ class ConfigurationTest < Minitest::Test
     assert_equal "abc", config.dsn_key
     assert_equal "7", config.project_id
     assert_equal "http://host.example:3001/api/7/envelope/", config.envelope_url
-    assert_equal "http://host.example:3001/api/7/logs", config.logs_url
-    assert_equal "http://host.example:3001/api/7/metrics", config.metrics_url
   end
 
   def test_https_default_port_is_omitted_from_base

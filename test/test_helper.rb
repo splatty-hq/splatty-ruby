@@ -7,7 +7,6 @@ module SplattyTestHelpers
   def build_configuration(overrides = {})
     config = Splatty::Configuration.new
     config.dsn = overrides[:dsn] || "http://abc123@localhost:3000/42"
-    config.ingest_key = overrides[:ingest_key] || "ingest-key"
     config.environment = overrides[:environment] || "test"
     config.release = overrides[:release] || "0.0.1"
     config.enabled = overrides.fetch(:enabled, true)

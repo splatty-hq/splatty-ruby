@@ -5,7 +5,7 @@ module Splatty
     class InvalidDsn < StandardError; end
     class MissingConfig < StandardError; end
 
-    attr_accessor :dsn, :ingest_key, :environment, :release, :enabled,
+    attr_accessor :dsn, :environment, :release, :enabled,
                   :server_name, :open_timeout, :read_timeout,
                   :logger, :before_send
 
@@ -35,14 +35,6 @@ module Splatty
 
     def envelope_url
       "#{parsed_dsn[:base]}/api/#{parsed_dsn[:project_id]}/envelope/"
-    end
-
-    def logs_url
-      "#{parsed_dsn[:base]}/api/#{parsed_dsn[:project_id]}/logs"
-    end
-
-    def metrics_url
-      "#{parsed_dsn[:base]}/api/#{parsed_dsn[:project_id]}/metrics"
     end
 
     def dsn_key

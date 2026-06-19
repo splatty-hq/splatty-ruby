@@ -7,7 +7,6 @@ class SemanticLoggerAppenderTest < Minitest::Test
     Splatty.close
     Splatty.init do |c|
       c.dsn = "http://abc@example.com/1"
-      c.ingest_key = "k"
       c.environment = "test"
       c.release = "rel-9"
     end
