@@ -31,7 +31,7 @@ class TransportTest < Minitest::Test
   end
 
   def config
-    @config ||= build_configuration(dsn: "http://abc@127.0.0.1:#{@port}/42")
+    @config ||= build_configuration(url: "http://127.0.0.1:#{@port}", dsn: "abc")
   end
 
   def test_send_envelope_posts_three_line_body
@@ -40,10 +40,10 @@ class TransportTest < Minitest::Test
     transport.send_envelope(event)
 
     req = @requests.first
-    assert_equal "/api/42/envelope/", req[:path]
+    assert_equal "/api/envelope", req[:path]
     assert_equal "POST", req[:method]
-    assert_includes req[:headers]["x-sentry-auth"].first, "sentry_key=abc"
-    assert_equal "application/x-sentry-envelope", req[:headers]["content-type"].first
+    assert_equal "Bearer abc", req[:headers]["authorization"].first
+    assert_equal "application/x-splatty-envelope", req[:headers]["content-type"].first
     assert_equal "gzip", req[:headers]["content-encoding"].first
 
     decoded = Zlib::GzipReader.new(StringIO.new(req[:body])).read
@@ -65,9 +65,9 @@ class TransportTest < Minitest::Test
     transport.send_logs(host: "test-host", logs: logs)
 
     req = @requests.first
-    assert_equal "/api/42/envelope/", req[:path]
-    assert_includes req[:headers]["x-sentry-auth"].first, "sentry_key=abc"
-    assert_equal "application/x-sentry-envelope", req[:headers]["content-type"].first
+    assert_equal "/api/envelope", req[:path]
+    assert_equal "Bearer abc", req[:headers]["authorization"].first
+    assert_equal "application/x-splatty-envelope", req[:headers]["content-type"].first
     assert_equal "gzip", req[:headers]["content-encoding"].first
 
     decoded = Zlib::GzipReader.new(StringIO.new(req[:body])).read

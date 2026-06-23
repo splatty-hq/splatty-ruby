@@ -25,26 +25,24 @@ module Splatty
     def send_envelope(event)
       uri = URI.parse(@configuration.envelope_url)
       body = serialize_envelope(event)
-      post(uri, body, {
-        "Content-Type" => "application/x-sentry-envelope",
-        "X-Sentry-Auth" => sentry_auth_header
-      })
+      post(uri, body, envelope_headers)
     end
 
     def send_logs(host:, logs:)
       return if logs.empty?
       uri = URI.parse(@configuration.envelope_url)
       body = serialize_log_envelope(host, logs)
-      post(uri, body, {
-        "Content-Type" => "application/x-sentry-envelope",
-        "X-Sentry-Auth" => sentry_auth_header
-      })
+      post(uri, body, envelope_headers)
     end
 
     private
 
-    def sentry_auth_header
-      "Sentry sentry_version=7, sentry_client=#{SDK_NAME}/#{Splatty::VERSION}, sentry_key=#{@configuration.dsn_key}"
+    def envelope_headers
+      {
+        "Content-Type" => "application/x-splatty-envelope",
+        "Authorization" => "Bearer #{@configuration.dsn_key}",
+        "User-Agent" => "#{SDK_NAME}/#{Splatty::VERSION}"
+      }
     end
 
     def serialize_envelope(event)

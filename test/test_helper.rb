@@ -6,7 +6,8 @@ require "splatty"
 module SplattyTestHelpers
   def build_configuration(overrides = {})
     config = Splatty::Configuration.new
-    config.dsn = overrides[:dsn] || "http://abc123@localhost:3000/42"
+    config.url = overrides[:url] || "http://localhost:3000"
+    config.dsn = overrides[:dsn] || "abc123"
     config.environment = overrides[:environment] || "test"
     config.release = overrides[:release] || "0.0.1"
     config.enabled = overrides.fetch(:enabled, true)
