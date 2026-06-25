@@ -24,11 +24,20 @@ module Splatty
 
     def validate!
       return unless enabled
-      raise MissingConfig, "config.url is required" if url.to_s.empty?
-      raise MissingConfig, "config.dsn is required" if dsn.to_s.empty?
-      raise InvalidDsn, "config.url must include scheme + host" if URI.parse(url).host.to_s.empty?
-    rescue URI::InvalidURIError => e
-      raise InvalidDsn, e.message
+      return disable!("config.url is required") if url.to_s.empty?
+      return disable!("config.dsn is required") if dsn.to_s.empty?
+      begin
+        parsed = URI.parse(url)
+      rescue URI::InvalidURIError => e
+        return disable!("config.url is invalid: #{e.message}")
+      end
+      return disable!("config.url must include scheme + host") if parsed.host.to_s.empty?
+    end
+
+    def disable!(message)
+      @enabled = false
+      log_warning(message)
+      nil
     end
 
     def enabled?
@@ -41,6 +50,17 @@ module Splatty
 
     def dsn_key
       dsn
+    end
+
+    private
+
+    def log_warning(message)
+      full = "[Splatty] disabled: #{message}"
+      if logger
+        logger.warn(full)
+      else
+        Kernel.warn(full)
+      end
     end
   end
 end
