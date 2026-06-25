@@ -19,6 +19,7 @@ Splatty.init do |config|
   config.dsn         = ENV["SPLATTY_DSN"]
   config.environment = ENV.fetch("RACK_ENV", "development")
   config.release     = ENV["SPLATTY_RELEASE"]
+  # config.logs = false  # disable log shipping (default: true)
 end
 
 begin
@@ -48,11 +49,14 @@ Splatty.init do |config|
 end
 ```
 
-### Semantic Logger
+### Logs
 
-```ruby
-SemanticLogger.add_appender(appender: Splatty::SemanticLogger.new)
-```
+Splatty ships `semantic_logger` as a dependency and auto-registers a Splatty
+appender on `Splatty.init`, so any code that logs through `SemanticLogger` is
+forwarded to Splatty. In Rails apps, `rails_semantic_logger` is also pulled in
+and required by Splatty's railtie, which replaces `Rails.logger` and Rails'
+log subscribers with semantic_logger — so request/controller/SQL logs flow to
+Splatty with no extra wiring. Disable with `config.logs = false`.
 
 ## License
 

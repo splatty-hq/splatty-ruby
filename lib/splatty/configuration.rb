@@ -5,7 +5,7 @@ module Splatty
     class InvalidDsn < StandardError; end
     class MissingConfig < StandardError; end
 
-    attr_accessor :url, :dsn, :environment, :release, :enabled,
+    attr_accessor :url, :dsn, :environment, :release, :enabled, :logs,
                   :server_name, :open_timeout, :read_timeout,
                   :logger, :before_send
 
@@ -13,6 +13,7 @@ module Splatty
 
     def initialize
       @enabled = true
+      @logs = true
       @url = DEFAULT_URL
       @environment = ENV["RACK_ENV"] || ENV["RAILS_ENV"] || "development"
       @release = ENV["SPLATTY_RELEASE"]
