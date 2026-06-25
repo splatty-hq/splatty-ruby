@@ -96,7 +96,7 @@ module Splatty
         {
           timestamp: ((log.time || Time.now).utc.to_f * 1000).to_i,
           level: map_level(log.level),
-          message: log.message.to_s,
+          message: build_message(log.message.to_s, fields),
           request_id: extract_field(fields, "request_id"),
           method: extract_field(fields, "method"),
           path: extract_field(fields, "path"),
@@ -109,6 +109,12 @@ module Splatty
           host: @host,
           fields: fields
         }
+      end
+
+      def build_message(message, fields)
+        sql = fields["sql"].to_s.strip
+        return message if sql.empty?
+        message.empty? ? sql : "#{message} — #{sql}"
       end
 
       def map_level(level)
