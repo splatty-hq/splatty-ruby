@@ -13,7 +13,7 @@ module Splatty
       # set of Rails request logs, which become another batch, etc.
       INTAKE_PATH_PATTERN = %r{\A/api/\d+/(logs|metrics|envelope)/?\z}.freeze
 
-      def initialize(level: :info, batch_size: DEFAULT_BATCH_SIZE,
+      def initialize(level: nil, batch_size: DEFAULT_BATCH_SIZE,
                      flush_interval: DEFAULT_FLUSH_INTERVAL,
                      queue_limit: DEFAULT_QUEUE_LIMIT, host: nil, **args)
         @batch_size = batch_size
