@@ -20,5 +20,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "json", "~> 2.0"
   spec.add_dependency "semantic_logger", "~> 4.15"
-  spec.add_dependency "rails_semantic_logger", "~> 4.17"
+  spec.add_dependency "rails_semantic_logger", ">= 4.17", "< 6.0"
 end
