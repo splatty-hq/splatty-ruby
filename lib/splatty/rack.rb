@@ -17,7 +17,10 @@ module Splatty
       def capture(exception, env)
         return unless Splatty.enabled?
         request = build_request(env)
-        Splatty.capture_exception(exception, request: request)
+        scope = { request: request }
+        request_id = env["action_dispatch.request_id"] || env["HTTP_X_REQUEST_ID"]
+        scope[:tags] = { "request_id" => request_id.to_s } if request_id
+        Splatty.capture_exception(exception, **scope)
       end
 
       def build_request(env)
