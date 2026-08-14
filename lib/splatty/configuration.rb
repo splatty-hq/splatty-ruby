@@ -9,7 +9,7 @@ module Splatty
                   :server_name, :open_timeout, :read_timeout,
                   :logger, :before_send
 
-    DEFAULT_URL = "https://splatty.k0va1.dev".freeze
+    DEFAULT_URL = "https://splatty.app".freeze
 
     def initialize
       @enabled = true

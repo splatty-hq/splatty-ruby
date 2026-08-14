@@ -15,7 +15,7 @@ gem "splatty"
 
 ```ruby
 Splatty.init do |config|
-  config.url         = ENV.fetch("SPLATTY_URL", "https://splatty.k0va1.dev")
+  config.url         = ENV.fetch("SPLATTY_URL", "https://splatty.app")
   config.dsn         = ENV["SPLATTY_DSN"]
   config.environment = ENV.fetch("RACK_ENV", "development")
   config.release     = ENV["SPLATTY_RELEASE"]
@@ -45,7 +45,7 @@ The Railtie auto-loads when Rails is present. Configure in an initializer:
 # config/initializers/splatty.rb
 Splatty.init do |config|
   config.dsn = ENV["SPLATTY_DSN"]
-  # config.url defaults to https://splatty.k0va1.dev — override with ENV["SPLATTY_URL"] if needed
+  # config.url defaults to https://splatty.app — override with ENV["SPLATTY_URL"] if needed
 end
 ```
 
