@@ -70,4 +70,19 @@ class RackMiddlewareTest < Minitest::Test
     assert_raises(RuntimeError) { middleware.call(Rack::MockRequest.env_for("/x")) }
     assert_equal({}, sent_events.first[:tags])
   end
+
+  def test_scrubs_sensitive_request_headers_by_default
+    app = ->(_env) { raise "boom" }
+    middleware = Splatty::Rack::CaptureExceptions.new(app)
+    env = Rack::MockRequest.env_for("/x",
+      "HTTP_COOKIE" => "session=abc",
+      "HTTP_AUTHORIZATION" => "Bearer secret",
+      "HTTP_ACCEPT" => "text/html")
+    assert_raises(RuntimeError) { middleware.call(env) }
+
+    headers = sent_events.first[:request][:headers]
+    assert_equal "[Filtered]", headers["Cookie"]
+    assert_equal "[Filtered]", headers["Authorization"]
+    assert_equal "text/html", headers["Accept"]
+  end
 end

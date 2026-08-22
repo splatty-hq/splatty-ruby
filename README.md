@@ -20,8 +20,17 @@ Splatty.init do |config|
   config.environment = ENV.fetch("RACK_ENV", "development")
   config.release     = ENV["SPLATTY_RELEASE"]
   # config.logs = false  # disable log shipping (default: true)
+  # config.send_default_pii = true  # send request headers verbatim (default: false)
 end
+```
 
+By default (`send_default_pii = false`) sensitive request headers — `Cookie`,
+`Authorization`, CSRF tokens, API keys and similar — are replaced with
+`[Filtered]` before an event leaves the process. Set `send_default_pii = true`
+only if you understand that cookies and auth tokens will then be transmitted and
+stored.
+
+```ruby
 begin
   do_something
 rescue => e

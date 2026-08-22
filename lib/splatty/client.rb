@@ -5,11 +5,12 @@ module Splatty
     def initialize(configuration)
       @configuration = configuration
       @transport = Transport.new(configuration)
+      @scrubber = Scrubber.new(configuration)
     end
 
     def capture_exception(exception, **scope)
       event = Event.from_exception(exception, configuration, scope: scope)
-      event = filter(event)
+      event = process(event)
       return nil unless event
       transport.send_envelope(event)
       event[:event_id]
@@ -17,7 +18,7 @@ module Splatty
 
     def capture_message(message, level: :info, **scope)
       event = Event.from_message(message, configuration, level: level, scope: scope)
-      event = filter(event)
+      event = process(event)
       return nil unless event
       transport.send_envelope(event)
       event[:event_id]
@@ -28,6 +29,10 @@ module Splatty
     end
 
     private
+
+    def process(event)
+      filter(@scrubber.scrub(event))
+    end
 
     def filter(event)
       hook = configuration.before_send

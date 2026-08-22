@@ -60,4 +60,8 @@ class ConfigurationTest < Minitest::Test
     config.url = nil
     config.validate!
   end
+
+  def test_send_default_pii_defaults_to_false
+    refute Splatty::Configuration.new.send_default_pii
+  end
 end
