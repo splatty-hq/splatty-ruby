@@ -49,6 +49,26 @@ Splatty.init do |config|
 end
 ```
 
+### Background jobs
+
+`Splatty.init` installs error handlers for the job backends it finds loaded, so
+failures outside the request cycle are reported too:
+
+- **Active Job** — subscribes to `perform.active_job` and reports any job whose
+  exception escaped `retry_on` / `discard_on`. Jobs that are about to be retried
+  and jobs discarded on purpose are not reported. Events are tagged with
+  `job_class`, `job_queue` and `job_backend` (the queue adapter name), and carry
+  the job id, attempt count and serialized arguments as extra data.
+- **Sidekiq** — appends an error handler to `Sidekiq.configure_server`, which
+  also covers failures Active Job never sees: plain `Sidekiq::Job` classes,
+  unparseable payloads and errors raised while dispatching a job.
+- **Solid Queue** — chains onto `SolidQueue.on_thread_error` (any previously
+  configured handler still runs), catching worker, dispatcher and supervisor
+  thread errors on top of the job failures Active Job reports.
+
+An exception object is only reported once, so a job failure that surfaces
+through two of these paths produces a single event.
+
 ### Logs
 
 Splatty ships `semantic_logger` as a dependency and auto-registers a Splatty

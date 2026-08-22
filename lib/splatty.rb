@@ -4,9 +4,15 @@ require "splatty/transport"
 require "splatty/event"
 require "splatty/client"
 require "splatty/semantic_logger"
+require "splatty/jobs"
+require "splatty/active_job"
+require "splatty/sidekiq"
+require "splatty/solid_queue"
 
 module Splatty
   class Error < StandardError; end
+
+  CAPTURED_IVAR = :@__splatty_captured
 
   class << self
     def init
@@ -14,7 +20,10 @@ module Splatty
       yield configuration if block_given?
       configuration.validate!
       @client = Client.new(configuration)
-      install_log_appender if configuration.enabled? && configuration.logs
+      if configuration.enabled?
+        install_log_appender if configuration.logs
+        install_integrations
+      end
       @client
     end
 
@@ -32,6 +41,8 @@ module Splatty
 
     def capture_exception(exception, **opts)
       return nil unless enabled?
+      return nil if already_captured?(exception)
+      mark_captured(exception)
       @client.capture_exception(exception, **opts)
     end
 
@@ -42,11 +53,34 @@ module Splatty
 
     def close
       uninstall_log_appender
+      uninstall_integrations
       @client&.close
       @client = nil
     end
 
     private
+
+    def already_captured?(exception)
+      exception.is_a?(Exception) && exception.instance_variable_defined?(CAPTURED_IVAR)
+    end
+
+    def mark_captured(exception)
+      return unless exception.is_a?(Exception)
+      return if exception.frozen?
+      exception.instance_variable_set(CAPTURED_IVAR, true)
+    end
+
+    def install_integrations
+      ActiveJob.install!
+      Sidekiq.install!
+      SolidQueue.install!
+    end
+
+    def uninstall_integrations
+      ActiveJob.uninstall!
+      Sidekiq.uninstall!
+      SolidQueue.uninstall!
+    end
 
     def install_log_appender
       return if @log_appender
