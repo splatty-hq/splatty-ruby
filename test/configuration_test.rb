@@ -1,4 +1,5 @@
 require "test_helper"
+require "logger"
 
 class ConfigurationTest < Minitest::Test
   include SplattyTestHelpers
@@ -14,20 +15,34 @@ class ConfigurationTest < Minitest::Test
     assert_equal "https://example.com/api/envelope", config.envelope_url
   end
 
-  def test_validate_raises_when_url_missing
+  def test_validate_disables_when_url_missing
     config = Splatty::Configuration.new
     config.enabled = true
     config.dsn = "abc"
     config.url = nil
-    assert_raises(Splatty::Configuration::MissingConfig) { config.validate! }
+    config.logger = Logger.new(IO::NULL)
+    config.validate!
+    refute config.enabled?
   end
 
-  def test_validate_raises_when_dsn_missing
+  def test_validate_disables_when_dsn_missing
     config = Splatty::Configuration.new
     config.enabled = true
     config.url = "https://example.com"
     config.dsn = nil
-    assert_raises(Splatty::Configuration::MissingConfig) { config.validate! }
+    config.logger = Logger.new(IO::NULL)
+    config.validate!
+    refute config.enabled?
+  end
+
+  def test_validate_disables_when_url_invalid
+    config = Splatty::Configuration.new
+    config.enabled = true
+    config.dsn = "abc"
+    config.url = "not-a-url"
+    config.logger = Logger.new(IO::NULL)
+    config.validate!
+    refute config.enabled?
   end
 
   def test_disabled_when_dsn_blank
@@ -44,5 +59,9 @@ class ConfigurationTest < Minitest::Test
     config.dsn = nil
     config.url = nil
     config.validate!
+  end
+
+  def test_send_default_pii_defaults_to_false
+    refute Splatty::Configuration.new.send_default_pii
   end
 end

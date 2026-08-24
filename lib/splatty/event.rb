@@ -45,6 +45,7 @@ module Splatty
         release: @configuration.release,
         server_name: @configuration.server_name || Socket.gethostname,
         sdk: { name: Splatty::Transport::SDK_NAME, version: Splatty::VERSION },
+        transaction: scope[:transaction],
         tags: scope[:tags] || {},
         extra: scope[:extra] || {},
         contexts: contexts(scope),

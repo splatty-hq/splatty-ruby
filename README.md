@@ -15,12 +15,22 @@ gem "splatty"
 
 ```ruby
 Splatty.init do |config|
-  config.url         = ENV.fetch("SPLATTY_URL", "https://splatty.k0va1.dev")
+  config.url         = ENV.fetch("SPLATTY_URL", "https://splatty.app")
   config.dsn         = ENV["SPLATTY_DSN"]
   config.environment = ENV.fetch("RACK_ENV", "development")
   config.release     = ENV["SPLATTY_RELEASE"]
+  # config.logs = false  # disable log shipping (default: true)
+  # config.send_default_pii = true  # send request headers verbatim (default: false)
 end
+```
 
+By default (`send_default_pii = false`) sensitive request headers — `Cookie`,
+`Authorization`, CSRF tokens, API keys and similar — are replaced with
+`[Filtered]` before an event leaves the process. Set `send_default_pii = true`
+only if you understand that cookies and auth tokens will then be transmitted and
+stored.
+
+```ruby
 begin
   do_something
 rescue => e
@@ -44,15 +54,38 @@ The Railtie auto-loads when Rails is present. Configure in an initializer:
 # config/initializers/splatty.rb
 Splatty.init do |config|
   config.dsn = ENV["SPLATTY_DSN"]
-  # config.url defaults to https://splatty.k0va1.dev — override with ENV["SPLATTY_URL"] if needed
+  # config.url defaults to https://splatty.app — override with ENV["SPLATTY_URL"] if needed
 end
 ```
 
-### Semantic Logger
+### Background jobs
 
-```ruby
-SemanticLogger.add_appender(appender: Splatty::SemanticLogger.new)
-```
+`Splatty.init` installs error handlers for the job backends it finds loaded, so
+failures outside the request cycle are reported too:
+
+- **Active Job** — subscribes to `perform.active_job` and reports any job whose
+  exception escaped `retry_on` / `discard_on`. Jobs that are about to be retried
+  and jobs discarded on purpose are not reported. Events are tagged with
+  `job_class`, `job_queue` and `job_backend` (the queue adapter name), and carry
+  the job id, attempt count and serialized arguments as extra data.
+- **Sidekiq** — appends an error handler to `Sidekiq.configure_server`, which
+  also covers failures Active Job never sees: plain `Sidekiq::Job` classes,
+  unparseable payloads and errors raised while dispatching a job.
+- **Solid Queue** — chains onto `SolidQueue.on_thread_error` (any previously
+  configured handler still runs), catching worker, dispatcher and supervisor
+  thread errors on top of the job failures Active Job reports.
+
+An exception object is only reported once, so a job failure that surfaces
+through two of these paths produces a single event.
+
+### Logs
+
+Splatty ships `semantic_logger` as a dependency and auto-registers a Splatty
+appender on `Splatty.init`, so any code that logs through `SemanticLogger` is
+forwarded to Splatty. In Rails apps, `rails_semantic_logger` is also pulled in
+and required by Splatty's railtie, which replaces `Rails.logger` and Rails'
+log subscribers with semantic_logger — so request/controller/SQL logs flow to
+Splatty with no extra wiring. Disable with `config.logs = false`.
 
 ## License
 

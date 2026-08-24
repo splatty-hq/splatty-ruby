@@ -124,8 +124,8 @@ module Splatty
     end
 
     def log_failure(uri, error)
-      logger = @configuration.logger
       msg = "[splatty] transport failure #{uri} #{error.class}: #{error.message}"
+      logger = @configuration.logger || (defined?(Rails) && Rails.respond_to?(:logger) ? Rails.logger : nil)
       logger ? logger.warn(msg) : warn(msg)
     end
   end

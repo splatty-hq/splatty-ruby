@@ -46,4 +46,43 @@ class RackMiddlewareTest < Minitest::Test
     assert_equal "POST", event[:request][:method]
     assert_includes event[:request][:url], "/x?y=1"
   end
+
+  def test_tags_events_with_the_request_id
+    app = ->(_env) { raise "boom" }
+    middleware = Splatty::Rack::CaptureExceptions.new(app)
+    env = Rack::MockRequest.env_for("/x")
+    env["action_dispatch.request_id"] = "req-abc-123"
+    assert_raises(RuntimeError) { middleware.call(env) }
+    assert_equal "req-abc-123", sent_events.first[:tags]["request_id"]
+  end
+
+  def test_falls_back_to_the_x_request_id_header
+    app = ->(_env) { raise "boom" }
+    middleware = Splatty::Rack::CaptureExceptions.new(app)
+    env = Rack::MockRequest.env_for("/x", "HTTP_X_REQUEST_ID" => "hdr-456")
+    assert_raises(RuntimeError) { middleware.call(env) }
+    assert_equal "hdr-456", sent_events.first[:tags]["request_id"]
+  end
+
+  def test_omits_the_tag_without_a_request_id
+    app = ->(_env) { raise "boom" }
+    middleware = Splatty::Rack::CaptureExceptions.new(app)
+    assert_raises(RuntimeError) { middleware.call(Rack::MockRequest.env_for("/x")) }
+    assert_equal({}, sent_events.first[:tags])
+  end
+
+  def test_scrubs_sensitive_request_headers_by_default
+    app = ->(_env) { raise "boom" }
+    middleware = Splatty::Rack::CaptureExceptions.new(app)
+    env = Rack::MockRequest.env_for("/x",
+      "HTTP_COOKIE" => "session=abc",
+      "HTTP_AUTHORIZATION" => "Bearer secret",
+      "HTTP_ACCEPT" => "text/html")
+    assert_raises(RuntimeError) { middleware.call(env) }
+
+    headers = sent_events.first[:request][:headers]
+    assert_equal "[Filtered]", headers["Cookie"]
+    assert_equal "[Filtered]", headers["Authorization"]
+    assert_equal "text/html", headers["Accept"]
+  end
 end
