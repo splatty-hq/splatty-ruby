@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/splatty-hq/splatty-ruby/compare/v0.1.1...v0.2.0) (2026-08-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* `development` and `test` no longer get semantic logging. Set `SPLATTY_RAILS_LOGS=true` to restore it there.
+
+### Features
+
+* leave Rails' logger alone in development and test
+
 ## [0.1.1](https://github.com/splatty-hq/splatty-ruby/compare/v0.1.0...v0.1.1) (2026-08-24)
 
 
