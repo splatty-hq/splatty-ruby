@@ -82,10 +82,27 @@ through two of these paths produces a single event.
 
 Splatty ships `semantic_logger` as a dependency and auto-registers a Splatty
 appender on `Splatty.init`, so any code that logs through `SemanticLogger` is
-forwarded to Splatty. In Rails apps, `rails_semantic_logger` is also pulled in
-and required by Splatty's railtie, which replaces `Rails.logger` and Rails'
-log subscribers with semantic_logger — so request/controller/SQL logs flow to
-Splatty with no extra wiring. Disable with `config.logs = false`.
+forwarded to Splatty. Disable with `config.logs = false`.
+
+In Rails apps, `rails_semantic_logger` is also pulled in and required by
+Splatty's railtie, which replaces `Rails.logger` and Rails' log subscribers with
+semantic_logger — so request/controller/SQL logs flow to Splatty with no extra
+wiring.
+
+That replacement happens as the gem is required, which is far earlier than
+`Splatty.init` and applies to whatever environment the app is booting. Since it
+changes what a developer sees in the terminal, and neither environment ships
+anything anyway, **`development` and `test` keep the stock Rails logger**;
+everything else gets semantic logging. Override either way with
+`SPLATTY_RAILS_LOGS` (`true`/`1` or `false`/`0`):
+
+```sh
+SPLATTY_RAILS_LOGS=true bin/rails server   # semantic logging in development too
+```
+
+Note this is separate from `config.logs`, which decides whether captured logs
+are *shipped*. Turning `config.logs` off in production still leaves Rails.logger
+replaced; set `SPLATTY_RAILS_LOGS=false` to leave the logger alone as well.
 
 ## License
 

@@ -15,6 +15,13 @@ module Splatty
 
   CAPTURED_IVAR = :@__splatty_captured
 
+  # Rails' own logs only reach Splatty once semantic_logger owns Rails.logger,
+  # which rails_semantic_logger arranges the moment it is required — in every
+  # environment, whether or not anything is ever shipped from that one. So the
+  # environments a developer reads logs in are left alone by default and keep
+  # the stock Rails logger; SPLATTY_RAILS_LOGS settles it either way.
+  LOCAL_ENVIRONMENTS = %w[development test].freeze
+
   class << self
     def init
       configuration = Configuration.new
@@ -50,6 +57,14 @@ module Splatty
     def capture_message(message, level: :info, **opts)
       return nil unless enabled?
       @client.capture_message(message, level: level, **opts)
+    end
+
+    def capture_rails_logs?(environment)
+      case ENV["SPLATTY_RAILS_LOGS"]
+      when "true", "1" then true
+      when "false", "0" then false
+      else !LOCAL_ENVIRONMENTS.include?(environment.to_s)
+      end
     end
 
     def close
