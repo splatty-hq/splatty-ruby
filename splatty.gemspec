@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Sentry-compatible client for Splatty (errors + logs)"
   spec.description = "Ruby client for Splatty. Captures exceptions and logs and ships them over the Sentry-compatible envelope protocol."
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2"
+  spec.required_ruby_version = ">= 3.3"
 
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/CHANGELOG.md"
