@@ -30,6 +30,27 @@ class EventTest < Minitest::Test
     assert value[:stacktrace][:frames].any? { |f| f[:lineno].is_a?(Integer) }
   end
 
+  def test_frames_include_source_context
+    error = raise_and_capture
+    event = Splatty::Event.from_exception(error, @config)
+    frame = event[:exception][:values].first[:stacktrace][:frames].last
+
+    assert_equal __FILE__, frame[:abs_path]
+    assert_equal 'raise "boom"', frame[:context_line].strip
+    assert_equal 5, frame[:pre_context].size
+    assert_equal 5, frame[:post_context].size
+    assert_includes frame[:pre_context].last, "def raise_and_capture"
+  end
+
+  def test_context_lines_zero_disables_source_context
+    error = raise_and_capture
+    event = Splatty::Event.from_exception(error, build_configuration(context_lines: 0))
+    frame = event[:exception][:values].first[:stacktrace][:frames].last
+
+    assert_equal __FILE__, frame[:abs_path]
+    refute frame.key?(:context_line)
+  end
+
   def test_from_exception_unwraps_cause_chain
     error = begin
       begin

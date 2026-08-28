@@ -7,7 +7,7 @@ module Splatty
 
     attr_accessor :url, :dsn, :environment, :release, :enabled, :logs,
                   :server_name, :open_timeout, :read_timeout,
-                  :logger, :before_send, :send_default_pii
+                  :logger, :before_send, :send_default_pii, :context_lines
 
     DEFAULT_URL = "https://splatty.app".freeze
 
@@ -22,6 +22,7 @@ module Splatty
       @read_timeout = 10
       @before_send = nil
       @send_default_pii = false
+      @context_lines = 5
     end
 
     def validate!

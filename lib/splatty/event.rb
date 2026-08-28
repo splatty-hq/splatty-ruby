@@ -16,6 +16,10 @@ module Splatty
       builder.build_message(message, level, scope)
     end
 
+    def self.line_cache
+      @line_cache ||= LineCache.new
+    end
+
     def initialize(configuration)
       @configuration = configuration
     end
@@ -95,13 +99,15 @@ module Splatty
     def frame(loc)
       filename = loc.respond_to?(:absolute_path) ? (loc.absolute_path || loc.path) : loc.path
       function = loc.respond_to?(:label) ? loc.label : loc.function
-      {
+      frame = {
         filename: short_filename(filename),
         abs_path: filename,
         function: function,
         lineno: loc.lineno,
         in_app: in_app?(filename)
       }
+      context = Event.line_cache.context(filename, loc.lineno, @configuration.context_lines)
+      context ? frame.merge(context) : frame
     end
 
     def short_filename(path)

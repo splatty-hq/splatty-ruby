@@ -21,6 +21,7 @@ Splatty.init do |config|
   config.release     = ENV["SPLATTY_RELEASE"]
   # config.logs = false  # disable log shipping (default: true)
   # config.send_default_pii = true  # send request headers verbatim (default: false)
+  # config.context_lines = 0  # stop sending source lines around each frame (default: 5)
 end
 ```
 

@@ -1,6 +1,7 @@
 require "splatty/version"
 require "splatty/configuration"
 require "splatty/transport"
+require "splatty/line_cache"
 require "splatty/event"
 require "splatty/scrubber"
 require "splatty/client"
