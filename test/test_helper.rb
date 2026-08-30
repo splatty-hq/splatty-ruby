@@ -10,6 +10,7 @@ module SplattyTestHelpers
       c.url = overrides.fetch(:url, "http://example.com")
       c.dsn = overrides.fetch(:dsn, "abc")
       c.environment = overrides.fetch(:environment, "test")
+      c.release = overrides.fetch(:release, nil)
       c.logs = overrides.fetch(:logs, false)
       c.enabled = overrides.fetch(:enabled, true)
     end

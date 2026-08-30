@@ -23,6 +23,9 @@ module Splatty
   # the stock Rails logger; SPLATTY_RAILS_LOGS settles it either way.
   LOCAL_ENVIRONMENTS = %w[development test].freeze
 
+  # How long `close` waits for an in-flight release announcement to land.
+  RELEASE_ANNOUNCEMENT_TIMEOUT = 5
+
   class << self
     def init
       configuration = Configuration.new
@@ -32,8 +35,27 @@ module Splatty
       if configuration.enabled?
         install_log_appender if configuration.logs
         install_integrations
+        announce_release
       end
       @client
+    end
+
+    # Tells Splatty this version is now serving, so a deploy shows up without
+    # waiting for the app to log or raise something first. Fire-and-forget: a
+    # booting process must not wait on the network, and a Splatty outage must
+    # not hold up the boot it is reporting. Every process of a deploy announces;
+    # the server keeps one deployment per release and environment.
+    def announce_release
+      return nil if @release_announced
+      return nil unless enabled?
+      return nil if @client.configuration.release.to_s.empty?
+
+      @release_announced = true
+      @release_thread = Thread.new do
+        @client.announce_release
+      rescue StandardError => e
+        warn_release_failure(e)
+      end
     end
 
     def client
@@ -69,6 +91,9 @@ module Splatty
     end
 
     def close
+      @release_thread&.join(RELEASE_ANNOUNCEMENT_TIMEOUT)
+      @release_thread = nil
+      @release_announced = false
       uninstall_log_appender
       uninstall_integrations
       @client&.close
@@ -76,6 +101,12 @@ module Splatty
     end
 
     private
+
+    def warn_release_failure(error)
+      message = "[Splatty] release announcement failed: #{error.class}: #{error.message}"
+      logger = @client&.configuration&.logger
+      logger ? logger.warn(message) : Kernel.warn(message)
+    end
 
     def already_captured?(exception)
       exception.is_a?(Exception) && exception.instance_variable_defined?(CAPTURED_IVAR)

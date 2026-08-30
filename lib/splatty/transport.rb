@@ -28,6 +28,11 @@ module Splatty
       post(uri, body, envelope_headers)
     end
 
+    def send_release(release:, environment:)
+      uri = URI.parse(@configuration.envelope_url)
+      post(uri, serialize_release_envelope(release, environment), envelope_headers)
+    end
+
     def send_logs(host:, logs:)
       return if logs.empty?
       uri = URI.parse(@configuration.envelope_url)
@@ -55,6 +60,21 @@ module Splatty
       item_payload = JSON.generate(event)
       item_header = {
         type: "event",
+        content_type: "application/json",
+        length: item_payload.bytesize
+      }
+      "#{JSON.generate(header)}\n#{JSON.generate(item_header)}\n#{item_payload}"
+    end
+
+    def serialize_release_envelope(release, environment)
+      header = {
+        sent_at: Time.now.utc.iso8601,
+        dsn: @configuration.dsn,
+        sdk: { name: SDK_NAME, version: Splatty::VERSION }
+      }
+      item_payload = JSON.generate({ release: release, environment: environment })
+      item_header = {
+        type: "release",
         content_type: "application/json",
         length: item_payload.bytesize
       }

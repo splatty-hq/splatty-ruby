@@ -24,6 +24,13 @@ module Splatty
       event[:event_id]
     end
 
+    def announce_release
+      release = configuration.release.to_s
+      return nil if release.empty?
+
+      transport.send_release(release: release, environment: configuration.environment)
+    end
+
     def close
       @transport.close_connections
     end
