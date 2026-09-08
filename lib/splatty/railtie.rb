@@ -3,6 +3,13 @@ module Splatty
     initializer "splatty.middleware" do |app|
       app.middleware.use Splatty::Rack::CaptureExceptions
     end
+
+    # rails_semantic_logger captures config.log_tags inside its :initialize_logger
+    # replacement, so the reshape has to be sequenced before that; a plain
+    # initializer would run too late.
+    initializer "splatty.log_tags", before: :initialize_logger do |app|
+      app.config.log_tags = Splatty.rails_log_tags(app.config.log_tags) if defined?(::RailsSemanticLogger)
+    end
   end
 end
 

@@ -90,6 +90,21 @@ module Splatty
       end
     end
 
+    # rails_semantic_logger only names tags when config.log_tags is a Hash, and
+    # the appender reads request_id back out of those named tags — Rails' stock
+    # `config.log_tags = [:request_id]` would come through as an anonymous
+    # positional tag and every shipped log row would get a blank request_id.
+    # Reshape the standard config instead of making every app do it: default the
+    # unset case and convert symbol arrays; anything already a Hash, or an array
+    # holding procs/strings that have no name to give, passes through untouched.
+    def rails_log_tags(tags)
+      case tags
+      when nil then { request_id: :request_id }
+      when Array then tags.all?(Symbol) ? tags.to_h { |tag| [tag, tag] } : tags
+      else tags
+      end
+    end
+
     def close
       @release_thread&.join(RELEASE_ANNOUNCEMENT_TIMEOUT)
       @release_thread = nil
