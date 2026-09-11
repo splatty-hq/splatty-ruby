@@ -85,4 +85,13 @@ class RackMiddlewareTest < Minitest::Test
     assert_equal "[Filtered]", headers["Authorization"]
     assert_equal "text/html", headers["Accept"]
   end
+
+  def test_reraises_excluded_exceptions_without_capturing
+    Splatty.configuration.excluded_exceptions += ["RuntimeError"]
+    app = ->(_env) { raise "boom" }
+    middleware = Splatty::Rack::CaptureExceptions.new(app)
+    err = assert_raises(RuntimeError) { middleware.call(Rack::MockRequest.env_for("/x")) }
+    assert_equal "boom", err.message
+    assert_empty sent_events
+  end
 end

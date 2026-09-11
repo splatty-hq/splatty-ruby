@@ -9,6 +9,8 @@ module Splatty
     end
 
     def capture_exception(exception, **scope)
+      return nil if configuration.excluded_exception?(exception)
+
       event = Event.from_exception(exception, configuration, scope: scope)
       event = process(event)
       return nil unless event

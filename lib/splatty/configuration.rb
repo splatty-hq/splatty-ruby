@@ -7,9 +7,31 @@ module Splatty
 
     attr_accessor :url, :dsn, :environment, :release, :enabled, :logs,
                   :server_name, :open_timeout, :read_timeout,
-                  :logger, :before_send, :send_default_pii, :context_lines
+                  :logger, :before_send, :send_default_pii, :context_lines,
+                  :excluded_exceptions
 
     DEFAULT_URL = "https://splatty.app".freeze
+
+    # Exceptions Rails and Rack turn into 4xx responses — request noise
+    # (guessed URLs, stale CSRF tokens, malformed params), not app failures.
+    # The same set Sentry ignores by default.
+    EXCLUDED_EXCEPTIONS_DEFAULT = %w[
+      AbstractController::ActionNotFound
+      ActionController::BadRequest
+      ActionController::InvalidAuthenticityToken
+      ActionController::InvalidCrossOriginRequest
+      ActionController::MethodNotAllowed
+      ActionController::NotImplemented
+      ActionController::ParameterMissing
+      ActionController::RoutingError
+      ActionController::UnknownFormat
+      ActionController::UnknownHttpMethod
+      ActionDispatch::Http::MimeNegotiation::InvalidType
+      ActionDispatch::Http::Parameters::ParseError
+      ActiveRecord::RecordNotFound
+      Rack::QueryParser::InvalidParameterError
+      Rack::QueryParser::ParameterTypeError
+    ].freeze
 
     def initialize
       @enabled = true
@@ -23,6 +45,19 @@ module Splatty
       @before_send = nil
       @send_default_pii = false
       @context_lines = 5
+      @excluded_exceptions = EXCLUDED_EXCEPTIONS_DEFAULT.dup
+    end
+
+    # Matches against ancestor names so subclasses are excluded too and the
+    # configured classes never need to be loaded (entries are plain strings;
+    # class objects also work since Class#to_s is the class name).
+    def excluded_exception?(exception)
+      return false unless exception.is_a?(Exception)
+      list = Array(excluded_exceptions)
+      return false if list.empty?
+
+      ancestors = exception.class.ancestors.filter_map(&:name)
+      list.any? { |excluded| ancestors.include?(excluded.to_s) }
     end
 
     def validate!
