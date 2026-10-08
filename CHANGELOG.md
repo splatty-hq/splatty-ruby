@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.0](https://github.com/splatty-hq/splatty-ruby/compare/v0.1.1...v0.2.0) (2026-10-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* development and test keep the stock Rails logger. Set SPLATTY_RAILS_LOGS=true to restore semantic logging there.
+
+### Features
+
+* announce the configured release on init ([baace62](https://github.com/splatty-hq/splatty-ruby/commit/baace62c848e4f86b1fdb41d3871b00e4da4663b))
+* **config:** default url, dsn and environment from SPLATTY_* variables ([c6886b4](https://github.com/splatty-hq/splatty-ruby/commit/c6886b42ed1885dfb7701e8cb8bce5b005debf57))
+* exclude request-noise exceptions from capture ([584dae9](https://github.com/splatty-hq/splatty-ruby/commit/584dae90d2d29de7a94eb0527fd03377b9df7071))
+* leave Rails' logger alone in development and test ([e7d34b3](https://github.com/splatty-hq/splatty-ruby/commit/e7d34b3dbeb00c9f5a9f0212d7c9da44bf80b108))
+* **rails:** reshape config.log_tags into named tags ([4df5aee](https://github.com/splatty-hq/splatty-ruby/commit/4df5aee768b6a002e3efc21de23748a00ebe6e6d))
+* **stacktrace:** send source context with every frame ([d68b976](https://github.com/splatty-hq/splatty-ruby/commit/d68b97615133a97902f5bb20abf190be6868ee24))
+
+
+### Bug Fixes
+
+* **logs:** filter the current intake paths and flush full batches early ([b701f0e](https://github.com/splatty-hq/splatty-ruby/commit/b701f0e7817c6b676bc23a619c6da4fdd0856189))
+
 ## [0.2.0](https://github.com/splatty-hq/splatty-ruby/compare/v0.1.1...v0.2.0) (2026-08-25)
 
 
