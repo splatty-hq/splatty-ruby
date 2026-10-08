@@ -1,7 +1,7 @@
 # Splatty
 
 Ruby client for [Splatty](https://github.com/k0va1/splatty). Captures exceptions
-and logs and ships them over the Sentry-compatible envelope protocol.
+and logs and ships them over the Splatty envelope protocol.
 
 ## Installation
 
@@ -15,10 +15,9 @@ gem "splatty"
 
 ```ruby
 Splatty.init do |config|
-  config.url         = ENV.fetch("SPLATTY_URL", "https://splatty.app")
-  config.dsn         = ENV["SPLATTY_DSN"]
-  config.environment = ENV.fetch("RACK_ENV", "development")
-  config.release     = ENV["SPLATTY_RELEASE"]
+  config.dsn = "your-project-dsn-key"
+  # url, dsn, environment and release default from SPLATTY_URL, SPLATTY_DSN,
+  # SPLATTY_ENVIRONMENT (then RACK_ENV / RAILS_ENV) and SPLATTY_RELEASE.
   # config.logs = false  # disable log shipping (default: true)
   # config.send_default_pii = true  # send request headers verbatim (default: false)
   # config.context_lines = 0  # stop sending source lines around each frame (default: 5)
@@ -44,7 +43,7 @@ Splatty.capture_message("hello", level: :info)
 ### Rack
 
 ```ruby
-use Splatty::Rack
+use Splatty::Rack::CaptureExceptions
 ```
 
 ### Rails

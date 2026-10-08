@@ -6,8 +6,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Alex Koval"]
   spec.email = ["al3xander.koval@gmail.com"]
   spec.homepage = "https://github.com/k0va1/splatty-ruby"
-  spec.summary = "Sentry-compatible client for Splatty (errors + logs)"
-  spec.description = "Ruby client for Splatty. Captures exceptions and logs and ships them over the Sentry-compatible envelope protocol."
+  spec.summary = "Splatty client for Ruby (errors + logs)"
+  spec.description = "Ruby client for Splatty. Captures exceptions and logs and ships them over the Splatty envelope protocol."
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.3"
 
