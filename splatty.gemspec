@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*.rb", "MIT-LICENSE", "README.md", "CHANGELOG.md"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "json", "~> 2.0"
+  spec.add_dependency "json", ">= 2", "< 4"
   spec.add_dependency "semantic_logger", "~> 4.15"
   spec.add_dependency "rails_semantic_logger", ">= 4.17", "< 6.0"
 end
