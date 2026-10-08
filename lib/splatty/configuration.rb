@@ -2,9 +2,6 @@ require "uri"
 
 module Splatty
   class Configuration
-    class InvalidDsn < StandardError; end
-    class MissingConfig < StandardError; end
-
     attr_accessor :url, :dsn, :environment, :release, :enabled, :logs,
                   :server_name, :open_timeout, :read_timeout,
                   :logger, :before_send, :send_default_pii, :context_lines,
@@ -36,8 +33,9 @@ module Splatty
     def initialize
       @enabled = true
       @logs = true
-      @url = DEFAULT_URL
-      @environment = ENV["RACK_ENV"] || ENV["RAILS_ENV"] || "development"
+      @url = ENV["SPLATTY_URL"] || DEFAULT_URL
+      @dsn = ENV["SPLATTY_DSN"]
+      @environment = ENV["SPLATTY_ENVIRONMENT"] || ENV["RACK_ENV"] || ENV["RAILS_ENV"] || "development"
       @release = ENV["SPLATTY_RELEASE"]
       @server_name = nil
       @open_timeout = 5

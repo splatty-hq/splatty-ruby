@@ -65,6 +65,25 @@ class ConfigurationTest < Minitest::Test
     refute Splatty::Configuration.new.send_default_pii
   end
 
+  def test_url_and_dsn_default_from_environment
+    ENV["SPLATTY_URL"] = "https://splatty.internal"
+    ENV["SPLATTY_DSN"] = "env-key"
+    config = Splatty::Configuration.new
+    assert_equal "https://splatty.internal", config.url
+    assert_equal "env-key", config.dsn
+  ensure
+    ENV.delete("SPLATTY_URL")
+    ENV.delete("SPLATTY_DSN")
+  end
+
+  def test_environment_prefers_splatty_environment
+    ENV["SPLATTY_ENVIRONMENT"] = "staging"
+    config = Splatty::Configuration.new
+    assert_equal "staging", config.environment
+  ensure
+    ENV.delete("SPLATTY_ENVIRONMENT")
+  end
+
   def test_excluded_exceptions_default_to_request_noise
     config = Splatty::Configuration.new
     assert_includes config.excluded_exceptions, "ActionController::RoutingError"
