@@ -69,20 +69,40 @@ class SemanticLoggerAppenderTest < Minitest::Test
   def test_drops_logs_about_splatty_intake_paths
     appender = Splatty::SemanticLogger::Appender.new(flush_interval: 5, host: "h")
 
-    %w[/api/4/logs /api/42/metrics /api/1/envelope/].each do |path|
+    %w[/api/4/logs /api/42/metrics /api/1/envelope/ /api/envelope /api/metrics /api/logs /api/envelope/].each do |path|
       log = ::SemanticLogger::Log.new("Test", :info)
       log.message = "Completed POST #{path}"
       log.named_tags = { path: path, method: "POST", status: 202 }
       refute appender.log(log), "expected #{path} to be dropped"
     end
 
-    log = ::SemanticLogger::Log.new("Test", :info)
-    log.message = "real customer request"
-    log.named_tags = { path: "/users/42", method: "GET", status: 200 }
-    assert appender.log(log)
+    %w[/users/42 /api/envelopes].each do |path|
+      log = ::SemanticLogger::Log.new("Test", :info)
+      log.message = "real customer request"
+      log.named_tags = { path: path, method: "GET", status: 200 }
+      assert appender.log(log), "expected #{path} to be kept"
+    end
 
     appender.close
-    assert_equal 1, recorded.first[:logs].size
-    assert_equal "/users/42", recorded.first[:logs].first[:path]
+    assert_equal %w[/users/42 /api/envelopes], recorded.first[:logs].map { |entry| entry[:path] }
+  end
+
+  def test_flushes_early_when_batch_size_reached
+    appender = Splatty::SemanticLogger::Appender.new(
+      level: :info, batch_size: 2, flush_interval: 60, host: "h"
+    )
+
+    2.times do |i|
+      log = ::SemanticLogger::Log.new("Test", :info)
+      log.message = "m#{i}"
+      appender.log(log)
+    end
+
+    deadline = Time.now + 2
+    sleep 0.01 while recorded.empty? && Time.now < deadline
+    assert_equal 1, recorded.size
+    assert_equal 2, recorded.first[:logs].size
+  ensure
+    appender.close
   end
 end

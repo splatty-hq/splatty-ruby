@@ -11,7 +11,7 @@ module Splatty
       # Without this, dogfooded apps (the Splatty server logging to itself)
       # generate a positive feedback loop: every shipped batch becomes a new
       # set of Rails request logs, which become another batch, etc.
-      INTAKE_PATH_PATTERN = %r{\A/api/\d+/(logs|metrics|envelope)/?\z}.freeze
+      INTAKE_PATH_PATTERN = %r{\A/api/(?:\d+/)?(?:logs|metrics|envelope)/?\z}.freeze
 
       def initialize(level: nil, batch_size: DEFAULT_BATCH_SIZE,
                      flush_interval: DEFAULT_FLUSH_INTERVAL,
@@ -21,6 +21,8 @@ module Splatty
         @queue_limit = queue_limit
         @queue = Queue.new
         @mutex = Mutex.new
+        @wake_mutex = Mutex.new
+        @wake = ConditionVariable.new
         @running = true
         super(level: level, **args)
         @host = host || Socket.gethostname
@@ -34,6 +36,7 @@ module Splatty
           @queue.pop
         end
         @queue << build_entry(log)
+        wake_worker if @queue.size >= @batch_size
         true
       end
 
@@ -51,7 +54,7 @@ module Splatty
 
       def close
         @running = false
-        @worker&.wakeup if @worker&.alive?
+        wake_worker
         @worker&.join(2)
         drain
         true
@@ -63,7 +66,9 @@ module Splatty
         @worker = Thread.new do
           while @running
             begin
-              sleep @flush_interval
+              @wake_mutex.synchronize do
+                @wake.wait(@wake_mutex, @flush_interval) if @running && @queue.size < @batch_size
+              end
               drain
             rescue StandardError
               nil
@@ -71,6 +76,10 @@ module Splatty
           end
         end
         @worker.name = "splatty-log-flusher"
+      end
+
+      def wake_worker
+        @wake_mutex.synchronize { @wake.signal }
       end
 
       def drain
